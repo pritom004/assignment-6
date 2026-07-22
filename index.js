@@ -55,6 +55,63 @@ app.get("/tasks/:id", (req, res) => {
 
 const PORT = 3000;
 
+app.post("/tasks", (req, res) => {
+  const { title } = req.body;
+
+  if (!title) {
+    return res.status(400).json({
+      error: "Bad Request",
+    });
+  }
+
+  const task = { id: tasks.length + 1, title, done: false };
+
+  tasks.push(task);
+  res.status(201).json(task);
+});
+
+app.put("/tasks/:id", (req, res) => {
+  const taskId = req.params.id;
+
+  const taskIndex = tasks.findIndex((t) => t.id === parseInt(taskId));
+  const data = req.body;
+
+  if (taskIndex < 0) {
+    return res.status(404).json({
+      error: `Task ${taskId} not found`,
+    });
+  }
+
+  if (data.task === undefined && data.done === undefined) {
+    return res.status(400).json({
+      error: "Bad Request",
+    });
+  }
+
+  const updatedTask = Object.assign(tasks[taskIndex], data);
+
+  tasks[taskIndex] = updatedTask
+
+  return res.json(updatedTask);
+});
+
+
+app.delete("/tasks/:id", (req, res) => {
+  const taskId = req.params.id;
+  const taskIndex = tasks.findIndex(task => task.id === parseInt(taskId))
+
+  if(taskIndex < 0){
+    return res.status(404).json({
+      error: `Task ${taskId} not found`
+    })
+  }
+
+  tasks.splice(taskIndex, 1)
+
+  return res.status(204).end();
+})
+
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`);
 });
+
