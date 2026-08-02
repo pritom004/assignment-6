@@ -241,7 +241,7 @@ app.get("/tasks/:id", (req, res) => {
     });
   }
 
-  // Map SQLite 1/0 back to true/false
+  
   task.done = task.done === 1;
 
   return res.json(task);
@@ -249,41 +249,56 @@ app.get("/tasks/:id", (req, res) => {
 
 app.put("/tasks/:id", (req, res) => {
   const taskId = req.params.id;
-
-  const taskIndex = tasks.findIndex((t) => t.id === parseInt(taskId));
   const data = req.body;
 
-  if (taskIndex < 0) {
-    return res.status(404).json({
-      error: `Task ${taskId} not found`,
-    });
-  }
-
+ 
   if (data.title === undefined && data.done === undefined) {
     return res.status(400).json({
       error: "Bad Request",
     });
   }
 
-  const updatedTask = Object.assign(tasks[taskIndex], data);
 
-  tasks[taskIndex] = updatedTask;
+  const existingTask = db.prepare("SELECT * FROM tasks WHERE id = ?").get(taskId);
 
-  return res.json(updatedTask);
-});
-
-app.delete("/tasks/:id", (req, res) => {
-  const taskId = req.params.id;
-  const taskIndex = tasks.findIndex((task) => task.id === parseInt(taskId));
-
-  if (taskIndex < 0) {
+  if (!existingTask) {
     return res.status(404).json({
       error: `Task ${taskId} not found`,
     });
   }
 
-  tasks.splice(taskIndex, 1);
+ 
+  const newTitle = data.title !== undefined ? data.title : existingTask.title;
+  const newDone = data.done !== undefined ? (data.done ? 1 : 0) : existingTask.done;
 
+ 
+  db.prepare(
+    "UPDATE tasks SET title = ?, done = ?, updated_at = datetime('now') WHERE id = ?"
+  ).run(newTitle, newDone, taskId);
+
+ 
+  const updatedTask = db.prepare("SELECT * FROM tasks WHERE id = ?").get(taskId);
+  
+  return res.json({
+    ...updatedTask,
+    done: !!updatedTask.done
+  });
+});
+
+app.delete("/tasks/:id", (req, res) => {
+  const taskId = req.params.id;
+  
+  
+  const info = db.prepare("DELETE FROM tasks WHERE id = ?").run(taskId);
+
+ 
+  if (info.changes === 0) {
+    return res.status(404).json({
+      error: `Task ${taskId} not found`,
+    });
+  }
+
+ 
   return res.status(204).end();
 });
 
