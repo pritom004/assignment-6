@@ -17,10 +17,17 @@ A lightweight REST API built with **Express.js** that demonstrates CRUD (Create,
 
 ---
 
+## Why SQLite?
+
+SQLite was chosen because it provides a lightweight, serverless relational database experience. Instead of requiring a separate background service like PostgreSQL or MySQL, SQLite reads and writes directly to a local file. This makes it perfect for persistent data storage in a small project without adding complex configuration or infrastructure.
+
+---
+
 ## Requirements
 
 - Node.js 18+ (recommended)
 - npm
+- A SQLite Viewer (like DB Browser for SQLite) to manually inspect the data
 
 ---
 
