@@ -1,11 +1,56 @@
 import express from "express";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
+import Database from "better-sqlite3";
 
 const app = express();
+const db = new Database("tasks.db");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+const query = `
+  CREATE TABLE IF NOT EXISTS tasks (
+    id INTEGER PRIMARY KEY,
+    title TEXT NOT NULL,
+    done BOOLEAN DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+`;
+
+db.exec(query);
+
+const SEED_TASKS = [
+  {
+    title: "Review Q3 project proposal",
+    done: 0,
+  },
+  {
+    title: "Schedule quarterly team sync",
+    done: 1,
+  },
+  {
+    title: "Update server security certificates",
+    done: 0,
+  },
+];
+
+const seedData = () => {
+  const insertTasks = db.prepare("INSERT INTO tasks (title, done) VALUES(?, ?)");
+  
+  SEED_TASKS.forEach((task) => {
+    insertTasks.run(task.title, task.done);
+  });
+  // Do NOT close the database here, or the API won't be able to use it later.
+};
+
+
+const { hasRows } = db.prepare('SELECT EXISTS(SELECT 1 FROM tasks) AS hasRows').get();
+
+if (hasRows === 0) {
+  seedData();
+}
 
 
 const swaggerOptions = {
@@ -60,24 +105,6 @@ app.get("/", (req, res) => {
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
-
-const tasks = [
-  {
-    id: 1,
-    title: "Review Q3 project proposal",
-    done: false,
-  },
-  {
-    id: 2,
-    title: "Schedule quarterly team sync",
-    done: true,
-  },
-  {
-    id: 3,
-    title: "Update server security certificates",
-    done: false,
-  },
-];
 
 /**
  * @openapi
