@@ -37,21 +37,28 @@ const SEED_TASKS = [
 ];
 
 const seedData = () => {
-  const insertTasks = db.prepare("INSERT INTO tasks (title, done) VALUES(?, ?)");
-  
+  const insertTasks = db.prepare(
+    "INSERT INTO tasks (title, done) VALUES(?, ?)",
+  );
+
   SEED_TASKS.forEach((task) => {
     insertTasks.run(task.title, task.done);
   });
   // Do NOT close the database here, or the API won't be able to use it later.
 };
 
-
-const { hasRows } = db.prepare('SELECT EXISTS(SELECT 1 FROM tasks) AS hasRows').get();
+const { hasRows } = db
+  .prepare("SELECT EXISTS(SELECT 1 FROM tasks) AS hasRows")
+  .get();
 
 if (hasRows === 0) {
   seedData();
 }
 
+const formatTask = (task) => ({
+  ...task,
+  done: !!task.done,
+});
 
 const swaggerOptions = {
   definition: {
@@ -137,7 +144,10 @@ app.get("/health", (req, res) => {
  *         description: Bad Request - Title is missing or empty
  */
 app.get("/tasks", (req, res) => {
-  return res.json(tasks);
+  const dbTasks = db.prepare("SELECT * FROM tasks").all();
+  const formattedTasks = dbTasks.map(formatTask);
+
+  return res.json(formattedTasks);
 });
 
 app.post("/tasks", (req, res) => {
@@ -219,13 +229,16 @@ app.post("/tasks", (req, res) => {
 app.get("/tasks/:id", (req, res) => {
   const taskId = req.params.id;
 
-  const task = tasks.find((t) => t.id === parseInt(taskId));
+  const task = db.prepare("SELECT * FROM tasks WHERE id = ?").get(taskId);
 
   if (!task) {
     return res.status(404).json({
-      error: `Task ${taskId} not found`,
+      error: "Task not found",
     });
   }
+
+  // Map SQLite 1/0 back to true/false
+  task.done = task.done === 1;
 
   return res.json(task);
 });
