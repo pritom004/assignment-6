@@ -36,10 +36,10 @@ const SEED_TASKS = [
   },
 ];
 
+const insertTasks = db.prepare(
+  "INSERT INTO tasks (title, done) VALUES(?, ?)",
+);
 const seedData = () => {
-  const insertTasks = db.prepare(
-    "INSERT INTO tasks (title, done) VALUES(?, ?)",
-  );
 
   SEED_TASKS.forEach((task) => {
     insertTasks.run(task.title, task.done);
@@ -159,10 +159,14 @@ app.post("/tasks", (req, res) => {
     });
   }
 
-  const task = { id: tasks.length + 1, title, done: false };
+  const insertStmt = db.prepare("INSERT INTO tasks (title, done) VALUES (?, 0)");
+  const info = insertStmt.run(title);
 
-  tasks.push(task);
-  res.status(201).json(task);
+  
+  const task = db.prepare("SELECT * FROM tasks WHERE id = ?").get(info.lastInsertRowid);
+
+
+  res.status(201).json(formatTask(task));
 });
 
 /**
