@@ -17,9 +17,16 @@ A lightweight REST API built with **Express.js** that demonstrates CRUD (Create,
 
 ---
 
-## Why SQLite?
+---
 
-SQLite was chosen because it provides a lightweight, serverless relational database experience. Instead of requiring a separate background service like PostgreSQL or MySQL, SQLite reads and writes directly to a local file. This makes it perfect for persistent data storage in a small project without adding complex configuration or infrastructure.
+## Database Setup
+
+This project uses **PostgreSQL** running inside a Docker container. Data persists across container restarts using a Docker named volume (`taskdata`).
+
+Start the Postgres container locally:
+
+```bash
+docker run --name taskdb -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=tasks -p 5432:5432 -v taskdata:/var/lib/postgresql/data -d postgres:17
 
 ---
 
@@ -27,8 +34,8 @@ SQLite was chosen because it provides a lightweight, serverless relational datab
 
 - Node.js 18+ (recommended)
 - npm
-- A SQLite Viewer (like DB Browser for SQLite) to manually inspect the data
-
+- Docker Desktop or Podman[cite: 1]
+- A database client like DBeaver, TablePlus, or `psql` CLI[cite: 1]
 ---
 
 ## Installation & Run
