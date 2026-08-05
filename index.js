@@ -2,12 +2,17 @@ import express from "express";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 import Database from "better-sqlite3";
+import * as repo from "./repository.js"; 
+import "dotenv/config";
+
 
 const app = express();
 const db = new Database("tasks.db");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+repo.initDB()
 
 const query = `
   CREATE TABLE IF NOT EXISTS tasks (
@@ -44,7 +49,6 @@ const seedData = () => {
   SEED_TASKS.forEach((task) => {
     insertTasks.run(task.title, task.done);
   });
-  // Do NOT close the database here, or the API won't be able to use it later.
 };
 
 const { hasRows } = db
