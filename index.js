@@ -1,68 +1,18 @@
 import express from "express";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
-import Database from "better-sqlite3";
 import * as repo from "./repository.js"; 
 import 'dotenv/config';
 
 
 const app = express();
-const db = new Database("tasks.db");
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 repo.initDB()
 
-// const query = `
-//   CREATE TABLE IF NOT EXISTS tasks (
-//     id INTEGER PRIMARY KEY,
-//     title TEXT NOT NULL,
-//     done BOOLEAN DEFAULT 0,
-//     created_at TEXT NOT NULL DEFAULT (datetime('now')),
-//     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-//   );
-// `;
-
-// db.exec(query);
-
-// const SEED_TASKS = [
-//   {
-//     title: "Review Q3 project proposal",
-//     done: 0,
-//   },
-//   {
-//     title: "Schedule quarterly team sync",
-//     done: 1,
-//   },
-//   {
-//     title: "Update server security certificates",
-//     done: 0,
-//   },
-// ];
-
-// const insertTasks = db.prepare(
-//   "INSERT INTO tasks (title, done) VALUES(?, ?)",
-// );
-// const seedData = () => {
-
-//   SEED_TASKS.forEach((task) => {
-//     insertTasks.run(task.title, task.done);
-//   });
-// };
-
-// const { hasRows } = db
-//   .prepare("SELECT EXISTS(SELECT 1 FROM tasks) AS hasRows")
-//   .get();
-
-// if (hasRows === 0) {
-//   seedData();
-// }
-
-// const formatTask = (task) => ({
-//   ...task,
-//   done: !!task.done,
-// });
 
 const swaggerOptions = {
   definition: {
@@ -152,7 +102,7 @@ app.get("/tasks", async (req, res) => {
     return res.json(tasks)
 });
 
-app.post("/tasks", (req, res) => {
+app.post("/tasks", async (req, res) => {
   const { title } = req.body;
 
   if (!title) {
@@ -161,14 +111,8 @@ app.post("/tasks", (req, res) => {
     });
   }
 
-  const insertStmt = db.prepare("INSERT INTO tasks (title, done) VALUES (?, 0)");
-  const info = insertStmt.run(title);
-
-  
-  const task = db.prepare("SELECT * FROM tasks WHERE id = ?").get(info.lastInsertRowid);
-
-
-  res.status(201).json(formatTask(task));
+ const newTask = await repo.createTask(title);
+  res.status(201).json(newTask);
 });
 
 /**
@@ -232,75 +176,48 @@ app.post("/tasks", (req, res) => {
  *       404:
  *         description: Task not found
  */
-app.get("/tasks/:id", (req, res) => {
-  const taskId = req.params.id;
-
-  const task = db.prepare("SELECT * FROM tasks WHERE id = ?").get(taskId);
+app.get("/tasks/:id", async (req, res) => {
+const taskId = req.params.id;
+const task = await repo.getTaskById(taskId);
+  
 
   if (!task) {
-    return res.status(404).json({
-      error: "Task not found",
-    });
+    return res.status(404).json({ error: "Task not found" });
   }
-
-  
-  task.done = task.done === 1;
 
   return res.json(task);
 });
 
-app.put("/tasks/:id", (req, res) => {
+app.put("/tasks/:id", async (req, res) => {
   const taskId = req.params.id;
   const data = req.body;
 
- 
   if (data.title === undefined && data.done === undefined) {
-    return res.status(400).json({
-      error: "Bad Request",
-    });
+    return res.status(400).json({ error: "Bad Request" });
   }
 
-
-  const existingTask = db.prepare("SELECT * FROM tasks WHERE id = ?").get(taskId);
+  const existingTask = await repo.getTaskById(taskId);
 
   if (!existingTask) {
-    return res.status(404).json({
-      error: `Task ${taskId} not found`,
-    });
+    return res.status(404).json({ error: `Task ${taskId} not found` });
   }
 
- 
   const newTitle = data.title !== undefined ? data.title : existingTask.title;
-  const newDone = data.done !== undefined ? (data.done ? 1 : 0) : existingTask.done;
+  const newDone = data.done !== undefined ? data.done : existingTask.done;
 
- 
-  db.prepare(
-    "UPDATE tasks SET title = ?, done = ?, updated_at = datetime('now') WHERE id = ?"
-  ).run(newTitle, newDone, taskId);
-
- 
-  const updatedTask = db.prepare("SELECT * FROM tasks WHERE id = ?").get(taskId);
+  const updatedTask = await repo.updateTask(taskId, newTitle, newDone);
   
-  return res.json({
-    ...updatedTask,
-    done: !!updatedTask.done
-  });
+  return res.json(updatedTask);
 });
 
-app.delete("/tasks/:id", (req, res) => {
+app.delete("/tasks/:id", async (req, res) => {
   const taskId = req.params.id;
-  
-  
-  const info = db.prepare("DELETE FROM tasks WHERE id = ?").run(taskId);
+  const deletedCount = await repo.deleteTask(taskId);
 
- 
-  if (info.changes === 0) {
-    return res.status(404).json({
-      error: `Task ${taskId} not found`,
-    });
+  if (deletedCount === 0) {
+    return res.status(404).json({ error: `Task ${taskId} not found` });
   }
 
- 
   return res.status(204).end();
 });
 
