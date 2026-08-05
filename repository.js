@@ -1,7 +1,7 @@
 import { Pool } from "pg";
-
+import 'dotenv/config';
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: 'postgres://postgres:dev@localhost:5432/tasks',
 });
 
 export async function initDB() {
@@ -30,3 +30,7 @@ export async function initDB() {
   }
 }
 
+export async function getAllTasks() {
+  const { rows } = await pool.query("SELECT * FROM tasks");
+  return rows;
+}

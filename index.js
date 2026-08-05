@@ -3,7 +3,7 @@ import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 import Database from "better-sqlite3";
 import * as repo from "./repository.js"; 
-import "dotenv/config";
+import 'dotenv/config';
 
 
 const app = express();
@@ -14,55 +14,55 @@ app.use(express.urlencoded({ extended: true }));
 
 repo.initDB()
 
-const query = `
-  CREATE TABLE IF NOT EXISTS tasks (
-    id INTEGER PRIMARY KEY,
-    title TEXT NOT NULL,
-    done BOOLEAN DEFAULT 0,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-`;
+// const query = `
+//   CREATE TABLE IF NOT EXISTS tasks (
+//     id INTEGER PRIMARY KEY,
+//     title TEXT NOT NULL,
+//     done BOOLEAN DEFAULT 0,
+//     created_at TEXT NOT NULL DEFAULT (datetime('now')),
+//     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+//   );
+// `;
 
-db.exec(query);
+// db.exec(query);
 
-const SEED_TASKS = [
-  {
-    title: "Review Q3 project proposal",
-    done: 0,
-  },
-  {
-    title: "Schedule quarterly team sync",
-    done: 1,
-  },
-  {
-    title: "Update server security certificates",
-    done: 0,
-  },
-];
+// const SEED_TASKS = [
+//   {
+//     title: "Review Q3 project proposal",
+//     done: 0,
+//   },
+//   {
+//     title: "Schedule quarterly team sync",
+//     done: 1,
+//   },
+//   {
+//     title: "Update server security certificates",
+//     done: 0,
+//   },
+// ];
 
-const insertTasks = db.prepare(
-  "INSERT INTO tasks (title, done) VALUES(?, ?)",
-);
-const seedData = () => {
+// const insertTasks = db.prepare(
+//   "INSERT INTO tasks (title, done) VALUES(?, ?)",
+// );
+// const seedData = () => {
 
-  SEED_TASKS.forEach((task) => {
-    insertTasks.run(task.title, task.done);
-  });
-};
+//   SEED_TASKS.forEach((task) => {
+//     insertTasks.run(task.title, task.done);
+//   });
+// };
 
-const { hasRows } = db
-  .prepare("SELECT EXISTS(SELECT 1 FROM tasks) AS hasRows")
-  .get();
+// const { hasRows } = db
+//   .prepare("SELECT EXISTS(SELECT 1 FROM tasks) AS hasRows")
+//   .get();
 
-if (hasRows === 0) {
-  seedData();
-}
+// if (hasRows === 0) {
+//   seedData();
+// }
 
-const formatTask = (task) => ({
-  ...task,
-  done: !!task.done,
-});
+// const formatTask = (task) => ({
+//   ...task,
+//   done: !!task.done,
+// });
 
 const swaggerOptions = {
   definition: {
@@ -147,11 +147,9 @@ app.get("/health", (req, res) => {
  *       400:
  *         description: Bad Request - Title is missing or empty
  */
-app.get("/tasks", (req, res) => {
-  const dbTasks = db.prepare("SELECT * FROM tasks").all();
-  const formattedTasks = dbTasks.map(formatTask);
-
-  return res.json(formattedTasks);
+app.get("/tasks", async (req, res) => {
+    const tasks = await repo.getAllTasks()
+    return res.json(tasks)
 });
 
 app.post("/tasks", (req, res) => {
