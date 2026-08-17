@@ -3,20 +3,17 @@ import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 import taskRoutes from "./routes/tasks.routes.js";
 import authRoutes from "./routes/auth.routes.js";
-import {initDB} from "./config/repository.js"; 
-import 'dotenv/config';
-
+import { initDB } from "./config/repository.js";
+import "dotenv/config";
 
 const app = express();
 
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use("/tasks", taskRoutes)
-app.use("/auth", authRoutes)
+app.use("/tasks", taskRoutes);
+app.use("/auth", authRoutes);
 
-initDB()
-
+initDB();
 
 const swaggerOptions = {
   definition: {
@@ -71,11 +68,27 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
+app.get("/public/info", (req, res) => {
+  res.json({ message: "Welcome stranger! This info is public." });
+});
+
+app.get("/protected/profile", async (req, res) => {
+  const header = req.headers.authorization;
+  let token;
+
+  if (header && header.startsWith("Bearer")) {
+    token = header.split(" ")[1];
+  } else {
+    res.status(401).json({ error: "Access token required" });
+  }
+
+  return res.send("Success");
+});
 
 const PORT = process.env.PORT;
 
 app.listen(PORT, () => {
-  console.log('Server running and connected to Supabase');
+  console.log("Server running and connected to Supabase");
   console.log(`Server is running on http://localhost:${PORT}`);
   console.log(`Swagger UI live at http://localhost:${PORT}/docs`);
 });
