@@ -2,8 +2,8 @@ import express from "express";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 import taskRoutes from "./routes/tasks.routes.js";
+import authRoutes from "./routes/auth.routes.js";
 import {initDB} from "./config/repository.js"; 
-import { supabase } from "./supabase-client.js";
 import 'dotenv/config';
 
 
@@ -13,6 +13,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/tasks", taskRoutes)
+app.use("/auth", authRoutes)
 
 initDB()
 
