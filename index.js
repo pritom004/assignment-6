@@ -5,6 +5,7 @@ import taskRoutes from "./routes/tasks.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import { initDB } from "./config/repository.js";
 import "dotenv/config";
+import { authenticatedUser } from "./middlewares/auth.middleware.js";
 
 const app = express();
 
@@ -83,6 +84,10 @@ app.get("/protected/profile", async (req, res) => {
   }
 
   return res.send("Success");
+});
+
+app.get("/protected/dashboard", authenticatedUser, (req, res) => {
+  return res.sendStatus(200);
 });
 
 const PORT = process.env.PORT;
