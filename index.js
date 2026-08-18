@@ -30,7 +30,18 @@ const swaggerOptions = {
         description: "Local development server",
       },
     ],
+
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
   },
+
   apis: ["./*.js", "./routes/*.js", "./controllers/*.js"],
 };
 
@@ -73,6 +84,20 @@ app.get("/public/info", (req, res) => {
   res.json({ message: "Welcome stranger! This info is public." });
 });
 
+
+/**
+ * @openapi
+ * /protected/profile:
+ *   get:
+ *     summary: Read private profile data
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved profile
+ *       401:
+ *         description: Access token required
+ */
 app.get("/protected/profile", async (req, res) => {
   const header = req.headers.authorization;
   let token;
@@ -83,7 +108,7 @@ app.get("/protected/profile", async (req, res) => {
     res.status(401).json({ error: "Access token required" });
   }
 
-  return res.send("Success");
+  return res.send("Successfully retrieved profile");
 });
 
 app.get("/protected/dashboard", authenticatedUser, (req, res) => {
