@@ -3,6 +3,7 @@ import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 import taskRoutes from "./routes/tasks.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import aiRoutes from "./routes/ai.routes.js"
 import { initDB } from "./config/repository.js";
 import "dotenv/config";
 import { authenticatedUser } from "./middlewares/auth.middleware.js";
@@ -13,6 +14,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/tasks", taskRoutes);
 app.use("/auth", authRoutes);
+app.use("/ai", aiRoutes)
 
 initDB();
 
